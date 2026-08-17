@@ -1,23 +1,18 @@
 spring:
   application:
-    name:
-      RATING-SERVICE
-  datasource:
-    url: jdbc:mysql://127.0.0.1:3306/hotel
-    username: root
-    password: pass
-    drive-class-name: com.mysql.jdbc.Driver
+    name: RATING-SERVICE
+  data:
+    mongodb:
+      uri: ${MONGODB_URI:mongodb://localhost:27017/rating_db}
 
-    jpa:
-      hibernate:
-        ddl-auto: create
-      show-sql: true
+server:
+  port: 8081
 
-    hibernate.dialect: org.hibernate.dialect.MySQL5Dialect
-    hibernate.show_sql: true
-    hibernate.hbm2ddl.auto: update
-    entitymanager.packagesToScan: /
-
-Server:
-  Port:
-    8081
+eureka:
+  client:
+    service-url:
+      defaultZone: http://localhost:8761/eureka
+    register-with-eureka: true
+    fetch-registry: true
+  instance:
+    prefer-ip-address: true

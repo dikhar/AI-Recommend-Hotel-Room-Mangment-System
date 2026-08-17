@@ -27,6 +27,11 @@ public class HotelController {
         return ResponseEntity.status(HttpStatus.OK).body(allHotel);
     }
 
+    @GetMapping
+    public ResponseEntity<List<Hotel>> getHotelsByLocation(@RequestParam String location) {
+        return ResponseEntity.ok(hotelServiceImpl.getHotelsByLocation(location));
+    }
+
     @GetMapping("/{userId}")
     public ResponseEntity<Hotel> getUser(@PathVariable String userId) {
         Hotel h = hotelServiceImpl.get(userId);

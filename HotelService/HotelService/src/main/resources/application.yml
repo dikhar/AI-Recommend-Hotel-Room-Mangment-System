@@ -1,22 +1,8 @@
 server:
-  port:
-    8082
+  port: 8082
 spring:
   application:
-    name:
-      HOTEL-SERVICE
-  datasource:
-    url: jdbc:mysql://127.0.0.1:3306/hotel
-    username: root
-    password: pass
-    drive-class-name: com.mysql.jdbc.Driver
-
-    jpa:
-      hibernate:
-        ddl-auto: create
-      show-sql: true
-
-      hibernate.dialect: org.hibernate.dialect.MySQL5Dialect
-      hibernate.show_sql: true
-      hibernate.hbm2ddl.auto: update
-      entitymanager.packagesToScan: /
+    name: HOTEL-SERVICE
+  data:
+    mongodb:
+      uri: ${MONGODB_URI:mongodb://localhost:27017/hotel_db}
