@@ -43,7 +43,7 @@ public class UserServiceImpl implements userService {
     @Override
     public User getUser(String userId) {
         User user=repo.findById(userId).orElseThrow();
-        Rating[] ratingofUser=restTemplate.getForObject("http://localhost:8081/rating/user/"+user.getUser_Id(), Rating[].class);
+        Rating[] ratingofUser = restTemplate.getForObject("http://localhost:8081/rating/user/"+user.getUser_Id(), Rating[].class);
 
 //        List<Rating> ratingofUser = ratingService.getUser(user.getUser_Id());
         List<Rating> ratings = Arrays.stream(ratingofUser).toList();

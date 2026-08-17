@@ -1,6 +1,5 @@
 package com.user_serivice.userService.entity;
 
-import jakarta.persistence.Column;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -16,6 +15,8 @@ public class Rating {
     private String ratingId;
     private String UserId;
     private String HotelId;
+    private String roomId;
+    private RatingValue rating = RatingValue.NOT_RATED;
     private String feedback;
     private Hotel hotelListl;
 }

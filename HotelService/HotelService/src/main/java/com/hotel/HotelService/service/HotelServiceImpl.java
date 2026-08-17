@@ -15,12 +15,17 @@ public class HotelServiceImpl implements HotelSerive{
     @Override
     public Hotel create(Hotel hotel) {
         String uuid= UUID.randomUUID().toString();
-        hotel.setUser_id(uuid);
+        hotel.setHotelId(uuid);
         return repo.save(hotel);
     }
     @Override
     public List<Hotel> getAllHotel() {
         return repo.findAll();
+    }
+
+    @Override
+    public List<Hotel> getHotelsByLocation(String location) {
+        return repo.findByLocationIgnoreCase(location);
     }
 
     @Override

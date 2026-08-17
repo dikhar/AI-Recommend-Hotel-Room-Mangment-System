@@ -1,6 +1,7 @@
 package com.rating.RatingService.controlller;
 
 import com.rating.RatingService.entity.Rating;
+import com.rating.RatingService.dto.CheckInRequest;
 import com.rating.RatingService.service.RatingServic;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -17,29 +18,38 @@ public class RatingController {
     @PostMapping
     public ResponseEntity<Rating> create(@RequestBody Rating rating)
     {
-        Rating rating1=ratingServic.saveAllRate(rating);
+        Rating rating1 = ratingServic.saveAllRate(rating);
         return ResponseEntity.status(HttpStatus.CREATED).body(rating1);
     }
 
-    @RequestMapping("/allrating")
+    @PostMapping("/check-in")
+    public ResponseEntity<Rating> checkIn(@RequestBody CheckInRequest request) {
+        if (request.getUserId() == null || request.getHotelId() == null || request.getRoomId() == null) {
+            return ResponseEntity.badRequest().build();
+        }
+        Rating rating = ratingServic.checkIn(request.getUserId(), request.getHotelId(), request.getRoomId());
+        return ResponseEntity.status(HttpStatus.CREATED).body(rating);
+    }
+
+    @GetMapping("/allrating")
     public  ResponseEntity<List<Rating>> getAll()
     {
         List<Rating> allrating=ratingServic.getAllRate();
         return ResponseEntity.status(HttpStatus.OK).body(allrating);
     }
-    @RequestMapping("/{id}")///personal ID is service
+    @GetMapping("/{id}")///personal ID is service
     public  ResponseEntity<Rating> getSingleRating(@PathVariable String id)
     {
         Rating rating2=ratingServic.getRate(id);
         return ResponseEntity.ok(rating2);
     }
-    @RequestMapping("/user/{id}")//userId pass krne p
+    @GetMapping("/user/{id}")//userId pass krne p
     public  ResponseEntity<List<Rating>> getUserId(@PathVariable String id)
     {
         List<Rating> rating2=ratingServic.getUserId(id);
         return ResponseEntity.status(HttpStatus.OK).body(rating2);
     }
-    @RequestMapping("/hotel/{id}")//hotelId pass krne p
+    @GetMapping("/hotel/{id}")//hotelId pass krne p
     public  ResponseEntity<List<Rating>> getHotelId(@PathVariable String id)
     {
         List<Rating> rating2=ratingServic.getHotelId(id);

@@ -2,8 +2,8 @@ package com.user_serivice.userService.repository;
 
 import com.user_serivice.userService.entity.User;
 //import com.user_serivice.userService.entity.user;
-import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.mongodb.repository.MongoRepository;
 
-public interface Repo extends JpaRepository<User,String> {
+public interface Repo extends MongoRepository<User,String> {
 
 }

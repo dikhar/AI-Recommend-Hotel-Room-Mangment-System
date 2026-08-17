@@ -7,10 +7,12 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 
+import java.util.List;
+
 @FeignClient(name = "RATING-SERVICE")
 public interface RatingService {
     @GetMapping("/rating/user/{id}")
-    Rating getUser(@PathVariable String id);
+    List<Rating> getUser(@PathVariable String id);
     @PostMapping("/rating")
     Rating postUser(Rating rating);
 }

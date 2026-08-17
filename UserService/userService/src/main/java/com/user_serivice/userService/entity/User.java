@@ -1,31 +1,26 @@
 package com.user_serivice.userService.entity;
 
-import jakarta.persistence.*;
 import lombok.*;
+import org.springframework.data.annotation.Id;
+import org.springframework.data.annotation.Transient;
+import org.springframework.data.mongodb.core.mapping.Document;
 
 import java.util.ArrayList;
 import java.util.List;
 
 @Setter
 @Getter
-@Entity
+@Document(collection = "users")
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-@Table(name="microuser")
 public class User {
     @Id
-    @Column(name="Id")
     private String user_Id;
-    @Column(name="hotel_id")
     private String hotel_id;
-    @Column(name="rating_id")
     private String rating_id;
-    @Column(name="Name")
     private String name;
-    @Column(name="Mail")
     private String mail;
-    @Column(name="About")
     private String about;
     @Transient
     private List<Rating> ratings=new ArrayList<>();
