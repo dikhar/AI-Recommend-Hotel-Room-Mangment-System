@@ -6,6 +6,10 @@ spring:
     mongodb:
       uri: ${MONGODB_URI:mongodb://localhost:27017/user_db}
 
+
+server:
+  port: 8084
+
 openai:
   # Configure as the OPENAI_API_KEY environment variable; never commit a key.
   api-key: ${OPENAI_API_KEY:}
