@@ -9,4 +9,6 @@ public class CheckInRequest {
     private String userId;
     private String hotelId;
     private String roomId;
+    private String feedback;
+    private String rating;
 }

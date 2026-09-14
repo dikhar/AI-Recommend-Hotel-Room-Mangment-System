@@ -10,10 +10,10 @@ spring:
 server:
   port: 8084
 
-openai:
-  # Configure as the OPENAI_API_KEY environment variable; never commit a key.
-  api-key: ${OPENAI_API_KEY:}
-  model: ${OPENAI_MODEL:gpt-5.6}
+gemini:
+  # Configure as the GEMINI_API_KEY environment variable; never commit a key.
+  api-key: ${GEMINI_API_KEY:}
+  model: ${GEMINI_MODEL:gemini-3.8-flash}
 
 recommendation:
   # Set false to keep the same API while using only local history-based ranking.

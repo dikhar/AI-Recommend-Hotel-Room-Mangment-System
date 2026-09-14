@@ -1,6 +1,13 @@
 package com.user_serivice.userService.service;
 
-import com.fasterxml.jackson.databind.JsonNode;
+import com.google.genai.Client;
+import com.google.genai.gaos.models.interactions.CreateModelInteraction;
+import com.google.genai.gaos.models.interactions.Interaction;
+import com.google.genai.gaos.models.interactions.InteractionsInput;
+import com.google.genai.gaos.models.interactions.Model;
+import com.google.genai.gaos.models.interactions.ModelOutputStep;
+import com.google.genai.gaos.models.interactions.TextContent;
+import com.google.genai.gaos.models.operations.CreateInteractionRequestBody;
 import com.user_serivice.userService.dto.Recommendation;
 import com.user_serivice.userService.dto.HotelRoomSelection;
 import com.user_serivice.userService.entity.Rating;
@@ -8,19 +15,15 @@ import com.user_serivice.userService.entity.Room;
 import com.user_serivice.userService.external.HotelService;
 import com.user_serivice.userService.external.RatingService;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
-import org.springframework.web.client.RestTemplate;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.Comparator;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -28,20 +31,19 @@ import java.util.stream.Collectors;
 
 @Service
 public class RecommendationService {
+    private static final Logger log = LoggerFactory.getLogger(RecommendationService.class);
     private final RatingService ratingService;
     private final HotelService hotelService;
-    private final RestTemplate restTemplate;
     private final String apiKey;
     private final String model;
     private final boolean aiEnabled;
 
-    public RecommendationService(RatingService ratingService, HotelService hotelService, RestTemplate restTemplate,
-                                 @Value("${openai.api-key:}") String apiKey,
-                                 @Value("${openai.model:gpt-5.6}") String model,
+    public RecommendationService(RatingService ratingService, HotelService hotelService,
+                                 @Value("${gemini.api-key:}") String apiKey,
+                                 @Value("${gemini.model:gemini-3.8-flash}") String model,
                                  @Value("${recommendation.ai-enabled:true}") boolean aiEnabled) {
         this.ratingService = ratingService;
         this.hotelService = hotelService;
-        this.restTemplate = restTemplate;
         this.apiKey = apiKey;
         this.model = model;
         this.aiEnabled = aiEnabled;
@@ -130,22 +132,15 @@ public class RecommendationService {
 
     private String generateReason(List<Rating> history, List<Room> candidates) {
         if (!aiEnabled || !StringUtils.hasText(apiKey) || candidates.isEmpty()) return null;
+
         try {
             String prompt = "You recommend hotel rooms from a supplied catalog. Write one short, factual reason (max 30 words) "
                     + "for why the room choices fit the guest's past feedback. Do not invent amenities. "
                     + "Past feedback: " + history.stream().map(Rating::getFeedback).filter(StringUtils::hasText).toList()
                     + ". Candidates: " + candidates.stream().map(r -> r.getRoomType() + " | " + r.getAmenities() + " | capacity " + r.getCapacity()).toList();
-            Map<String, Object> request = new HashMap<>();
-            request.put("model", model);
-            request.put("input", prompt);
-            request.put("store", false);
-            HttpHeaders headers = new HttpHeaders();
-            headers.setBearerAuth(apiKey);
-            headers.setContentType(MediaType.APPLICATION_JSON);
-            JsonNode response = restTemplate.postForObject("https://api.openai.com/v1/responses",
-                    new HttpEntity<>(request, headers), JsonNode.class);
-            return response == null ? null : response.path("output").path(0).path("content").path(0).path("text").asText(null);
-        } catch (Exception ignored) {
+            return callGeminiApi(prompt);
+        } catch (Exception exception) {
+            log.warn("Gemini could not generate a recommendation reason: {}", exception.getMessage());
             return null;
         }
     }
@@ -158,26 +153,36 @@ public class RecommendationService {
                     + "Feedback: " + history.stream().map(Rating::getFeedback).filter(StringUtils::hasText).toList()
                     + ". Rooms: " + candidates.stream().map(r -> r.getRoomId() + " | " + r.getRoomType() + " | "
                     + r.getAmenities() + " | capacity " + r.getCapacity()).toList();
-            String response = callResponsesApi(prompt);
+            String response = callGeminiApi(prompt);
             if (!StringUtils.hasText(response)) return null;
             Matcher matcher = Pattern.compile("^\\s*([^|\\s]+)\\s*\\|\\s*(.+?)\\s*$", Pattern.DOTALL).matcher(response);
             return matcher.matches() ? new AiChoice(matcher.group(1), matcher.group(2)) : null;
-        } catch (Exception ignored) {
+        } catch (Exception exception) {
+            log.warn("Gemini could not choose a room: {}", exception.getMessage());
             return null;
         }
     }
 
-    private String callResponsesApi(String prompt) {
-        Map<String, Object> request = new HashMap<>();
-        request.put("model", model);
-        request.put("input", prompt);
-        request.put("store", false);
-        HttpHeaders headers = new HttpHeaders();
-        headers.setBearerAuth(apiKey);
-        headers.setContentType(MediaType.APPLICATION_JSON);
-        JsonNode response = restTemplate.postForObject("https://api.openai.com/v1/responses",
-                new HttpEntity<>(request, headers), JsonNode.class);
-        return response == null ? null : response.path("output").path(0).path("content").path(0).path("text").asText(null);
+    private String callGeminiApi(String prompt) {
+        Client client = Client.builder().apiKey(apiKey).build();
+        CreateModelInteraction params = CreateModelInteraction.builder()
+                .model(Model.of(model))
+                .input(InteractionsInput.of(prompt))
+                .build();
+        Interaction interaction = client.interactions
+                .create(CreateInteractionRequestBody.of(params))
+                .interaction()
+                .get();
+        return interaction.outputText().orElseGet(() -> interaction.steps().stream()
+                .flatMap(List::stream)
+                .filter(ModelOutputStep.class::isInstance)
+                .map(ModelOutputStep.class::cast)
+                .flatMap(step -> step.content().stream().flatMap(List::stream))
+                .filter(TextContent.class::isInstance)
+                .map(TextContent.class::cast)
+                .map(text -> text.text().orElse(""))
+                .filter(StringUtils::hasText)
+                .collect(Collectors.joining("\n")));
     }
 
     private record AiChoice(String roomId, String reason) { }
